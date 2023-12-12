@@ -1,16 +1,28 @@
 // Importing required modules
 const fs = require('fs');
 const Audio = require('../models/Audio.js');
+const Account = require('../models/Account.js');
 
 // Controller for adding a new audio file
-exports.uploadAudio = async (req, res) => {
+const uploadAudio = async (req, res) => {
   try {
-    const { title, duration, fileType } = req.body;
+    const { title, fileType } = req.body;
+
+    // Check if the account is premium
+    const accountId = req.session.account._id;
+    const account = await Account.findById(accountId);
+
+    // If the account is not premium and has already uploaded 3 audio files, reject the upload
+    if (!account.premium) {
+      const uploadedAudioCount = await Audio.countDocuments({ owner: accountId });
+      if (uploadedAudioCount >= 3) {
+        return res.status(403).json({ error: 'Free accounts are limited to 3 audio uploads.' });
+      }
+    }
 
     // Creating an audio object
     const newAudio = new Audio({
       title,
-      duration,
       fileType,
       filePath: req.file.path,
       owner: req.session.account._id,
@@ -18,17 +30,17 @@ exports.uploadAudio = async (req, res) => {
 
     // Saving the new audio file to the database
     const savedAudio = await newAudio.save();
-    res.status(201).json(savedAudio);
+    return res.status(201).json({title: savedAudio.title, fileType: savedAudio.fileType});
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 
 // Render the upload audio page
-exports.uploadAudioPage = (req, res) => res.render('app');
+const uploadAudioPage = (req, res) => res.render('app');
 
 // Controller for deleting an audio file
-exports.deleteAudio = async (req, res) => {
+const deleteAudio = async (req, res) => {
   try {
     const audioId = req.params.id;
     const ownerId = req.session.account._id;
@@ -51,7 +63,7 @@ exports.deleteAudio = async (req, res) => {
 };
 
 // Controller for retrieving all audio files
-exports.getAudios = async (req, res) => {
+const getAudios = async (req, res) => {
   try {
     const query = { owner: req.session.account._id };
 
@@ -63,4 +75,11 @@ exports.getAudios = async (req, res) => {
     console.log(error);
     return res.status(500).json({ error: 'Error retrieving audio files!' });
   }
+};
+
+module.exports = {
+  uploadAudio,
+  uploadAudioPage,
+  deleteAudio,
+  getAudios,
 };

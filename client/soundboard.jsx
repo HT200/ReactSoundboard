@@ -2,13 +2,43 @@ const helper = require('./helper.js');
 const React = require('react');
 const ReactDOM = require('react-dom');
 
-const handleAudio = (e) => {
+// Function to handle audio form submission
+const handleAudio = async (e) => {
   e.preventDefault();
-  // helper.hideError();
+  console.log(e.target);
+  const title = e.target.title.value;
+  const fileType = e.target.fileType.value;
+  const filePath = e.target.audioFile.value;
+  const owner = await getCurrentAccountID();
 
-  // helper.sendPost(e.target.action, {name, age, type}, loadAudiosFromServer);
+  try {
+    const response = await fetch('/uploadAudio', {
+      method: 'POST',
+      body: {title, fileType, filePath, owner},
+    });
 
+    console.log(response);
+
+    if (response.ok) {
+      await loadAudiosFromServer();
+    } else {
+      console.error('Failed to upload audio:', response.status);
+    }
+  } catch (error) {
+    console.error('Failed to upload audio:', error);
+  }
   return false;
+};
+
+const getCurrentAccountID = async () => {
+  try {
+    const response = await fetch('/getID');
+    const data = await response.json();
+    const accountID = data.accountID;
+    return accountID;
+  } catch (error) {
+    console.error('Failed to get current account ID:', error);
+  }
 };
 
 const AudioForm = (props) => {
@@ -23,9 +53,6 @@ const AudioForm = (props) => {
       <label htmlFor="title">Title:</label>
       <input type="text" name="title" required />
       <br/>
-      <label htmlFor="duration">Duration (seconds):</label>
-      <input type="number" name="duration" min="0" required />
-      <br/>
       <label htmlFor="fileType">File Type:</label>
       <select name="fileType" required>
         <option value="mp3">MP3</option>
@@ -37,12 +64,13 @@ const AudioForm = (props) => {
       <label htmlFor="audioFile">Choose Audio File:</label>
       <input type="file" name="audioFile" accept=".mp3, .wav, .ogg, .flac" required />
       <br/>
-      <button type="submit">Upload Audio File</button>
+      <button type="submit" className='submit'>Upload Audio File</button>
     </form>
   )
 };
 
-const AudioGrid = (audios) => {
+const AudioGrid = ({audios}) => {
+  // Delete audio item
   const handleDelete = async (id) => {
     const response = await fetch(`/deleteAudio/${id}`, { method: 'DELETE' });
     if (response.ok) {
@@ -52,7 +80,10 @@ const AudioGrid = (audios) => {
     }
   };
 
-  if (audios.length === 0) {
+  console.log(audios);
+
+  // If no audio files are available, display a message
+  if (audios.length == 0 || audios == null) {
     return (
       <div className="audioGrid">
         <h3 className="emptyAudio">No audio files yet</h3>
@@ -60,32 +91,77 @@ const AudioGrid = (audios) => {
     );
   }
 
+  // Render audio items
+  const AudioNodes = audios.map((audio) => (
+    <div key={audio._id} className="audioItem">
+      <h3 className="audioName">{audio.title}</h3>
+      <audio controls>
+        <source src={`/uploads/${audio.filePath.split('\\')[1]}`} type={`audio/${audio.fileType || 'mpeg'}`} />
+        Your browser does not support the audio element.
+      </audio>
+      <button onClick={() => {document.querySelector('audio').currentTime = 0}} className="resetAudio">Reset</button>
+      <button onClick={() => handleDelete(audio._id)} className="deleteAudio">Delete</button>
+    </div>
+  ))
+
   return (
     <div className="audioGrid">
-      {audios.map((audio) => (
-        <div key={audio._id} className="audioItem">
-          <h3 className="audioName">Title: {audio.title}</h3>
-          <audio controls>
-            <source src={`/uploads/${audio._id}`} type={`audio/${audio.fileType || 'mpeg'}`} />
-            Your browser does not support the audio element.
-          </audio>
-          <button onClick={() => handleDelete(audio._id)} className="deleteAudio">Delete</button>
-        </div>
-      ))}
+      {AudioNodes}
     </div>
   );
+};
+
+const getPremium = async () => {
+  const response = await fetch('/getPremiumStatus');
+  const data = await response.json();
+  ReactDOM.render(
+    <PremiumToggle premium={data.premium} />, 
+    document.getElementById('premium')
+  );
+};
+
+const handleToggle = async () => {
+  try {
+    const response = await fetch('/togglePremium', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.ok) {
+      getPremium();
+    } else {
+      console.error('Failed to toggle premium status');
+    }
+  } catch (error) {
+    console.error('Error toggling premium status', error);
+  }
+};
+
+const PremiumToggle = (premium) => {
+  return (
+    <div>Current premium status: {premium.premium.toString()}</div>
+  )
 };
 
 const loadAudiosFromServer = async () => {
   const response = await fetch('/getAudios');
   const data = await response.json();
   ReactDOM.render(
-    <AudioGrid audios={data} />, 
+    <AudioGrid audios={data.audios} />, 
     document.getElementById('audios')
   );
 };
 
 const init = () => {
+  const pButton = document.querySelector('#premiumButton');
+  pButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    handleToggle();
+    return false;
+  });
+
   ReactDOM.render(
     <AudioForm />, 
     document.getElementById('makeAudio')
@@ -97,6 +173,7 @@ const init = () => {
   );
 
   loadAudiosFromServer();
+  getPremium();
 }
 
 window.onload = init;

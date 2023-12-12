@@ -76,11 +76,5 @@ AccountSchema.statics.authenticate = async (username, password, callback) => {
   }
 };
 
-// Function to toggle premium status for an account
-AccountSchema.methods.togglePremium = function () {
-  this.premium = !this.premium;
-  return this.save();
-};
-
 AccountModel = mongoose.model('Account', AccountSchema);
 module.exports = AccountModel;

@@ -20,7 +20,14 @@ const router = (app) => {
   app.get('/uploadAudio', mid.requiresLogin, controllers.Audio.uploadAudioPage);
   app.post('/uploadAudio', mid.requiresLogin, upload.single('audioFile'), controllers.Audio.uploadAudio);
 
+  app.post('/togglePremium', mid.requiresLogin, controllers.Account.togglePremium);
+  app.get('/getPremiumStatus', mid.requiresLogin, controllers.Account.getPremiumStatus);
+  app.get('/getID', mid.requiresLogin, controllers.Account.getCurrentAccountId);
+
+  app.post('/changePassword', mid.requiresSecure, mid.requiresLogout, controllers.Account.changePassword);
+
   app.get('/', mid.requiresSecure, mid.requiresLogout, controllers.Account.loginPage);
+  app.get('*', mid.requiresSecure, mid.requiresLogout, controllers.Account.loginPage);
 };
 
 module.exports = router;
