@@ -29,9 +29,10 @@ const uploadAudio = async (req, res) => {
     });
 
     // Saving the new audio file to the database
-    const savedAudio = await newAudio.save();
-    res.render('app');
-    //return res.status(201).json({title: savedAudio.title, fileType: savedAudio.fileType});
+    // const savedAudio = await newAudio.save();
+    await newAudio.save();
+    return res.render('app');
+    //return res.status(201).json({ title: savedAudio.title, fileType: savedAudio.fileType });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }

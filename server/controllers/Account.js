@@ -33,11 +33,9 @@ const login = (req, res) => {
 const getCurrentAccountId = (req, res) => {
   if (req.session.account) {
     return res.json({ accountId: req.session.account._id });
-  } else {
-    return res.status(401).json({ error: 'Not logged in!' });
   }
+  return res.status(401).json({ error: 'Not logged in!' });
 };
-
 
 const signup = async (req, res) => {
   const username = `${req.body.username}`;
@@ -130,7 +128,7 @@ const changePassword = async (req, res) => {
     console.log(err);
     return res.status(500).json({ error: 'An error occurred' });
   }
-}
+};
 
 module.exports = {
   loginPage,
@@ -140,5 +138,5 @@ module.exports = {
   changePassword,
   togglePremium,
   getPremiumStatus,
-  getCurrentAccountId
+  getCurrentAccountId,
 };
