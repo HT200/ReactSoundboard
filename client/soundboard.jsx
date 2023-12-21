@@ -17,8 +17,6 @@ const handleAudio = async (e) => {
       body: {title, fileType, filePath, owner},
     });
 
-    console.log(response);
-
     if (response.ok) {
       await loadAudiosFromServer();
     } else {
@@ -80,6 +78,10 @@ const AudioGrid = ({audios}) => {
     }
   };
 
+  const getFilePath = (filePath) => {
+    return filePath.includes('/') ? filePath.split('/')[1] : filePath.split('\\')[1];
+  }
+
   console.log(audios);
 
   // If no audio files are available, display a message
@@ -96,7 +98,7 @@ const AudioGrid = ({audios}) => {
     <div key={audio._id} className="audioItem">
       <h3 className="audioName">{audio.title}</h3>
       <audio controls>
-        <source src={`/uploads/${audio.filePath.split('\\')[1]}`} type={`audio/${audio.fileType || 'mpeg'}`} />
+        <source src={`/uploads/${getFilePath(audio.filePath)}`} type={`audio/${audio.fileType || 'mpeg'}`} />
         Your browser does not support the audio element.
       </audio>
       <button onClick={() => {document.querySelector('audio').currentTime = 0}} className="resetAudio">Reset</button>
