@@ -1,3 +1,3 @@
 # ReactSoundboard
 
-[Released App](https://react-soundboard-247fcfd677a0.herokuapp.com/soundboard)
+[Released App](https://react-soundboard-ec9d7a4f51f5.herokuapp.com)
